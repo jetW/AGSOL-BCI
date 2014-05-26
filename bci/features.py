@@ -23,7 +23,7 @@ def list_windows(configurations):
 def index_windows(windows, epoch):
 	s = epoch['start']
 	f = epoch['frequency']
-	return [(_ceil_index(a, s, f), _floor_index(b, s, f))
+	return [(_ceil_index(a, s, f), _floor_index(b, s, f) + 1)
 		for (a, b) in windows]
 
 def _ceil_index(time, start, frequency):
@@ -31,3 +31,16 @@ def _ceil_index(time, start, frequency):
 
 def _floor_index(time, start, frequency):
 	return int(math.floor((time - start) * frequency))
+
+def extract_mean(signal):
+	return numpy.mean(signal)
+
+def extract_means(signal, windows):
+	return [extract_mean(signal[a:b]) for (a, b) in windows]
+
+def extract_power(signal):
+	# http://en.wikipedia.org/wiki/Parseval's_theorem
+	return numpy.log(numpy.sum(numpy.square(signal)))
+
+def extract_powers(signal, windows):
+	return [extract_power(signal[a:b]) for (a, b) in windows]
