@@ -2,14 +2,21 @@
 import pylab
 
 def customized_bar_chart(coordinates, values, texts, barwidth, **kwargs):
+	if not isinstance(values[0], list):
+		values = [values]
+
 	ax = pylab.axes()
 	for i in range(len(coordinates)):
 
 		# Bars
 		x, y = coordinates[i]
-		value = values[i]
-		ax.broken_barh([(x - barwidth * 0.5, barwidth)], (y, value))
-		ax.broken_barh([(x - barwidth, barwidth * 2)], (y, 0))
+		basewidth = barwidth * (0.5 + 1.5 * len(values))
+		baseleft = x - basewidth * 0.5
+		for j in range(len(values)):
+			value = values[j][i]
+			barleft = baseleft + barwidth * (0.5 + 1.5 * j)
+			ax.broken_barh([(barleft, barwidth)], (y, value))
+		ax.broken_barh([(baseleft, basewidth)], (y, 0))
 
 		# Texts
 		text = texts[i]
