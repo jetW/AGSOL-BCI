@@ -1,32 +1,28 @@
 
 import pylab
 
-def customized_bar_chart(coordinates, values, barwidth, **kwargs):
-	if not isinstance(values[0], list):
-		values = [values]
-	colors = kwargs.get('colors', [None] * len(coordinates))
-	texts = kwargs.get('texts', [''] * len(coordinates))
+def customized_bar_chart(coordinates, values, barwidth, colors=None,
+	texts=None, textx=0, texty=0, textha='center', textva='center'):
+
+	# Validate parameters
+	values = [values] if not isinstance(values[0], list) else values
+	colors = [None] * len(coordinates) if colors == None else colors
+	texts = [''] * len(coordinates) if texts == None else texts
 
 	ax = pylab.axes()
-	for i in range(len(coordinates)):
+	for i, (x, y) in enumerate(coordinates):
 
-		# Bars
-		x, y = coordinates[i]
-		color = colors[i]
+		# Calculate and draw the base of bars
 		basewidth = barwidth * (0.5 + 1.5 * len(values))
 		baseleft = x - basewidth * 0.5
-		for j in range(len(values)):
-			value = values[j][i]
-			barleft = baseleft + barwidth * (0.5 + 1.5 * j)
-			ax.broken_barh([(barleft, barwidth)], (y, value), facecolors=color)
 		ax.broken_barh([(baseleft, basewidth)], (y, 0))
 
-		# Texts
-		text = texts[i]
-		textx = kwargs.get('textx', 0)
-		texty = kwargs.get('texty', 0)
-		textha = kwargs.get('textha', 'center')
-		textva = kwargs.get('textva', 'center')
-		pylab.text(x + textx, y + texty, text, ha=textha, va=textva)
+		# Calculate and draw the body of bars
+		for j, vs in enumerate(values):
+			barleft = baseleft + barwidth * (0.5 + 1.5 * j)
+			ax.broken_barh([(barleft, barwidth)], (y, vs[i]), facecolors=colors[i])
+
+		# Calculate and draw texts
+		pylab.text(x + textx, y + texty, texts[i], ha=textha, va=textva)
 
 	pylab.axis('off')
