@@ -1,5 +1,6 @@
 
 import pylab
+import stats
 
 def customized_bar_chart(coordinates, values, barwidth, colors=None,
 	texts=None, textx=0, texty=0, textha='center', textva='center'):
@@ -26,3 +27,24 @@ def customized_bar_chart(coordinates, values, barwidth, colors=None,
 		pylab.text(x + textx, y + texty, texts[i], ha=textha, va=textva)
 
 	pylab.axis('off')
+
+def customized_scatter_plot(coordinates, sizes, colors, scale, grayscale=False,
+	texts=None, textx=0, texty=0, textha='center', textva='center'):
+
+	# Rescale the data
+	sizes = stats.rescale(sizes, 0.01, 1)
+	colors = stats.rescale(colors, 0.01, 1)
+
+	# Map the data to coordinates, sizes, and colors
+	xs = [x for (x, y) in coordinates]
+	ys = [y for (x, y) in coordinates]
+	ss = [s * scale for s in sizes]
+	cs = [str(c) for c in colors] if grayscale else colors
+
+	# Draw the scatter plot
+	pylab.scatter(xs, ys, ss, cs)
+	pylab.axis('off')
+
+	# Draw texts
+	for i, (x, y) in enumerate(coordinates):
+		pylab.text(x + textx, y + texty, texts[i], ha=textha, va=textva)
