@@ -2,13 +2,11 @@
 import pylab
 import stats
 
-def customized_bar_chart(coordinates, values, barwidth, colors=None,
-	texts=None, textx=0, texty=0, textha='center', textva='center'):
+def customized_bar_chart(coordinates, values, barwidth, colors=None):
 
 	# Validate parameters
 	values = [values] if not isinstance(values[0], list) else values
-	colors = [None] * len(coordinates) if colors == None else colors
-	texts = [''] * len(coordinates) if texts == None else texts
+	colors = ['b'] * len(coordinates) if colors == None else colors
 
 	ax = pylab.axes()
 	for i, (x, y) in enumerate(coordinates):
@@ -23,17 +21,22 @@ def customized_bar_chart(coordinates, values, barwidth, colors=None,
 			barleft = baseleft + barwidth * (0.5 + 1.5 * j)
 			ax.broken_barh([(barleft, barwidth)], (y, vs[i]), facecolors=colors[i])
 
-		# Calculate and draw texts
-		pylab.text(x + textx, y + texty, texts[i], ha=textha, va=textva)
-
 	pylab.axis('off')
 
-def customized_scatter_plot(coordinates, sizes, colors, scale, grayscale=False,
-	texts=None, textx=0, texty=0, textha='center', textva='center'):
+def customized_scatter_plot(coordinates, sizes=None, scale=20, colors=None, grayscale=False):
 
-	# Rescale the data
-	sizes = stats.rescale(sizes, 0.01, 1)
-	colors = stats.rescale(colors, 0.01, 1)
+	# Validate and rescale data
+	if sizes == None:
+		sizes = [1] * len(coordinates)
+	else:
+		sizes = stats.rescale(sizes, 0.01, 1)
+	if colors == None:
+		if grayscale:
+			colors = ['0.75'] * len(coordinates)
+		else:
+			colors = ['b'] * len(coordinates)
+	else:
+		colors = stats.rescale(colors, 0.01, 1)
 
 	# Map the data to coordinates, sizes, and colors
 	xs = [x for (x, y) in coordinates]
@@ -45,6 +48,6 @@ def customized_scatter_plot(coordinates, sizes, colors, scale, grayscale=False,
 	pylab.scatter(xs, ys, ss, cs)
 	pylab.axis('off')
 
-	# Draw texts
+def draw_texts(coordinates, texts, textx=0, texty=0, textha='center', textva='center'):
 	for i, (x, y) in enumerate(coordinates):
 		pylab.text(x + textx, y + texty, texts[i], ha=textha, va=textva)
