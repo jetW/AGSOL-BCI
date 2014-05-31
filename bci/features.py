@@ -45,6 +45,16 @@ def extract_power(signal):
 def extract_powers(signal, windows):
 	return [extract_power(signal[a:b]) for (a, b) in windows]
 
+def extract_latency(signal, time, epoch, threshold, reference=0):
+	start = epoch['start']
+	frequency = epoch['frequency']
+	baseindex = (reference - start) * frequency
+	baseline = signal[baseindex]
+	remainder = signal[baseindex:]
+	offset = next(i for i, v in enumerate(remainder)
+		if abs(v - baseline) >= threshold)
+	return time[baseindex + offset]
+
 def extract_max_amplitude(signal, epoch, reference=0):
 	start = epoch['start']
 	frequency = epoch['frequency']
