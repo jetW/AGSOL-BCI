@@ -45,7 +45,7 @@ def extract_power(signal):
 def extract_powers(signal, windows):
 	return [extract_power(signal[a:b]) for (a, b) in windows]
 
-def extract_latency(signal, time, epoch, threshold, reference=0):
+def extract_latency(signal, time, threshold, epoch, reference=0):
 	start = epoch['start']
 	frequency = epoch['frequency']
 	baseindex = (reference - start) * frequency
