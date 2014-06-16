@@ -1,5 +1,5 @@
 
-import csv, math, cmath
+import csv, math, cmath, fractions
 
 def load_channel_locations(path):
 	electrodes = []
@@ -17,3 +17,11 @@ def load_channel_locations(path):
 			electrode['y'] = z.imag
 			electrodes.append(electrode)
 	return electrodes
+
+def load_laplacian_matrix(path):
+	matrix = []
+	with open(path) as f:
+		csv_reader = csv.reader(f, delimiter=' ')
+		for row in csv_reader:
+			matrix.append([float(fractions.Fraction(x)) for x in row])
+	return matrix
