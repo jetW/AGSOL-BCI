@@ -2,6 +2,7 @@
 import numpy, scipy.io
 import bci.signal, bci.features
 import wrappers
+import weka.arff
 
 def batch_bandpass_filtering(sources, destination_lists, bands, channels,
 	frequency, mTot='mTot', transpose=False, verbose=0):
@@ -39,7 +40,7 @@ def batch_bandpass_filtering(sources, destination_lists, bands, channels,
 
 def batch_extracting(sources, destinations, windows, channels,
 	do_mean=False, do_power=False, mTot='mTot', featmat='featmat',
-	transpose=False, verbose=0):
+	mclass='mclass', transpose=False, verbose=0):
 
 	for i, source in enumerate(sources):
 		if verbose >= 1:
@@ -70,9 +71,13 @@ def batch_extracting(sources, destinations, windows, channels,
 
 			vfeatmat.append(mx)
 
-		scipy.io.savemat(destinations[i], {featmat: vfeatmat})
+		vmclass = [m.type for m in vmTot]
 
-def batch_combining(source_lists, destinations, variable, axis, verbose=0):
+		scipy.io.savemat(destinations[i], {featmat: vfeatmat, mclass: vmclass})
+
+def batch_combining(source_lists, destinations, variable, axis,
+	passing_variables=[], verbose=0):
+
 	for i, sources in enumerate(source_lists):
 		if verbose >= 1:
 			print '[%d/%d] Combining to %s' % (
@@ -82,4 +87,28 @@ def batch_combining(source_lists, destinations, variable, axis, verbose=0):
 		for source in sources[1:]:
 			temp = wrappers.load_mat_variable(source, variable)
 			matrix = numpy.concatenate((matrix, temp), axis=axis)
-		scipy.io.savemat(destinations[i], {variable: matrix})
+
+		dictionary = {variable: matrix}
+		for pv in passing_variables:
+			dictionary[pv] = wrappers.load_mat_variable(sources[0], pv)
+
+		scipy.io.savemat(destinations[i], dictionary)
+
+def batch_converting(sources, destinations, relations, featmat='featmat', mclass='mclass', verbose=0):
+
+	for i, source in enumerate(sources):
+		if verbose >= 1:
+			print '[%d/%d] Converting %s' % (i+1, len(sources), source)
+
+		vfeatmat = wrappers.load_mat_variable(source, featmat)
+		vmclass = wrappers.load_mat_variable(source, mclass)
+
+		relation = relations[i]
+		attributes = [('BCI_%d' % (j+1), 'numeric')
+			for j in range(len(vfeatmat[0]))]
+		data = vfeatmat
+		classes = ('class', '{4,5}')
+		classifications = vmclass
+
+		weka.arff.write_arff(destinations[i], relation, attributes, data,
+			classes, classifications)
