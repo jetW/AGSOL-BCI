@@ -2,14 +2,14 @@
 import scipy.io, sklearn.svm
 import bci.features
 
-def import_mTot(path, mTot='mTot'):
-	mat = scipy.io.loadmat(path, struct_as_record = False, squeeze_me = True)
-	return mat[mTot]
+def load_mat_variable(path, variable):
+	mat = scipy.io.loadmat(path, struct_as_record=False, squeeze_me=True)
+	return mat[variable]
 
 def extract_latency(m, channel, threshold, epoch, verbose=False):
 	try:
 		return bci.features.extract_latency(
-			m.data[channel - 1], m.time, epoch, threshold)
+			m.data[channel-1], m.time, epoch, threshold)
 	except StopIteration:
 		if verbose:
 			message = '[Channel %d] No movement detected at Trial %d'
