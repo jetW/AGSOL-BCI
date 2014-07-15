@@ -2,7 +2,7 @@
 import numpy, scipy.io
 import bci.signal, bci.features
 import wrappers
-import weka.arff
+import weka.arff, weka.evaluate, weka.classify
 
 def batch_bandpass_filtering(sources, destination_lists, bands, channels,
 	frequency, mTot='mTot', transpose=False, verbose=0):
@@ -94,7 +94,8 @@ def batch_combining(source_lists, destinations, variable, axis,
 
 		scipy.io.savemat(destinations[i], dictionary)
 
-def batch_converting(sources, destinations, relations, featmat='featmat', mclass='mclass', verbose=0):
+def batch_converting(sources, destinations, relations,
+	featmat='featmat', mclass='mclass', verbose=0):
 
 	for i, source in enumerate(sources):
 		if verbose >= 1:
@@ -112,3 +113,39 @@ def batch_converting(sources, destinations, relations, featmat='featmat', mclass
 
 		weka.arff.write_arff(destinations[i], relation, attributes, data,
 			classes, classifications)
+
+def batch_infogain_evaluating(paths, classpath, threshold=0, verbose=0):
+
+	evaluation_lists = []
+
+	for i, path in enumerate(paths):
+		if verbose >= 1:
+			print '[%d/%d] Evaluating %s' % (i+1, len(paths), path)
+
+		output = weka.evaluate.evaluate_attribute(classpath,
+			'InfoGainAttributeEval', 'Ranker -T %f' % threshold, path)
+		evaluations = weka.evaluate.extract_evaluations(output)
+		evaluation_lists.append(evaluations)
+
+	return evaluation_lists
+
+def batch_infogain_svm_classifying(trainings, tests, classpath, threshold=0, verbose=0):
+
+	accuracies = []
+
+	for i, training in enumerate(trainings):
+		test = tests[i]
+		if verbose >= 1:
+			print '[%d/%d] Classifying %s' % (i+1, len(trainings), training)
+
+		output = weka.classify.classify_data(classpath,
+			'weka.classifiers.meta.FilteredClassifier ' +
+			'-F "weka.filters.supervised.attribute.AttributeSelection ' +
+			'-E \\"weka.attributeSelection.InfoGainAttributeEval\\" ' +
+			'-S \\"weka.attributeSelection.Ranker -T %f\\"" ' % threshold +
+			'-W weka.classifiers.functions.SMO',
+			training, '-T "' + test + '"')
+		accuracy = weka.classify.extract_test_accuracy(output)
+		accuracies.append(accuracy)
+
+	return accuracies
