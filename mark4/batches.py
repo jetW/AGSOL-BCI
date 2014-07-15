@@ -2,7 +2,7 @@
 import numpy, scipy.io
 import bci.signal, bci.features
 import wrappers
-import weka.arff, weka.evaluate, weka.classify
+import weka.arff
 
 def batch_bandpass_filtering(sources, destination_lists, bands, channels,
 	frequency, mTot='mTot', transpose=False, verbose=0):
@@ -38,9 +38,11 @@ def batch_bandpass_filtering(sources, destination_lists, bands, channels,
 
 			scipy.io.savemat(destination_lists[i][j], {mTot: vmTot})
 
-def batch_extracting(sources, destinations, windows, channels,
+def batch_extracting(sources, destinations, configurations, epoch, channels, 
 	do_mean=False, do_power=False, mTot='mTot', featmat='featmat',
 	mclass='mclass', transpose=False, verbose=0):
+
+	windows = bci.features.generate_sliding_window(configurations, epoch)
 
 	for i, source in enumerate(sources):
 		if verbose >= 1:
@@ -79,20 +81,13 @@ def batch_combining(source_lists, destinations, variable, axis,
 	passing_variables=[], verbose=0):
 
 	for i, sources in enumerate(source_lists):
+		destination = destinations[i]
 		if verbose >= 1:
 			print '[%d/%d] Combining to %s' % (
 				i+1, len(source_lists), destinations[i])
 
-		matrix = wrappers.load_mat_variable(sources[0], variable)
-		for source in sources[1:]:
-			temp = wrappers.load_mat_variable(source, variable)
-			matrix = numpy.concatenate((matrix, temp), axis=axis)
-
-		dictionary = {variable: matrix}
-		for pv in passing_variables:
-			dictionary[pv] = wrappers.load_mat_variable(sources[0], pv)
-
-		scipy.io.savemat(destinations[i], dictionary)
+		wrappers.combine_mat_matrices(
+			sources, destination, variable, axis, passing_variables)
 
 def batch_converting(sources, destinations, relations,
 	featmat='featmat', mclass='mclass', verbose=0):
@@ -122,10 +117,8 @@ def batch_infogain_evaluating(paths, classpath, threshold=0, verbose=0):
 		if verbose >= 1:
 			print '[%d/%d] Evaluating %s' % (i+1, len(paths), path)
 
-		output = weka.evaluate.evaluate_attribute(classpath,
-			'InfoGainAttributeEval', 'Ranker -T %f' % threshold, path)
-		evaluations = weka.evaluate.extract_evaluations(output)
-		evaluation_lists.append(evaluations)
+		evaluation_lists.append(
+			wrappers.evaluate_with_infogain(classpath, path, threshold))
 
 	return evaluation_lists
 
@@ -138,14 +131,8 @@ def batch_infogain_svm_classifying(trainings, tests, classpath, threshold=0, ver
 		if verbose >= 1:
 			print '[%d/%d] Classifying %s' % (i+1, len(trainings), training)
 
-		output = weka.classify.classify_data(classpath,
-			'weka.classifiers.meta.FilteredClassifier ' +
-			'-F "weka.filters.supervised.attribute.AttributeSelection ' +
-			'-E \\"weka.attributeSelection.InfoGainAttributeEval\\" ' +
-			'-S \\"weka.attributeSelection.Ranker -T %f\\"" ' % threshold +
-			'-W weka.classifiers.functions.SMO',
-			training, '-T "' + test + '"')
-		accuracy = weka.classify.extract_test_accuracy(output)
-		accuracies.append(accuracy)
+		accuracies.append(
+			wrappers.classify_with_infogain_svm(
+				classpath, training, test, threshold))
 
 	return accuracies
