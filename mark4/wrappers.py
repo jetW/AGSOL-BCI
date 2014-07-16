@@ -20,7 +20,7 @@ def combine_mat_matrices(sources, destination, variable, axis, extra_variables):
 def extract_latency(m, channel, threshold, epoch, verbose=False):
 	try:
 		return bci.features.extract_latency(
-			m.data[channel-1], m.time, epoch, threshold)
+			m.data[channel-1], m.time, threshold, epoch)
 	except StopIteration:
 		if verbose:
 			message = '[Channel %d] No movement detected at Trial %d'
