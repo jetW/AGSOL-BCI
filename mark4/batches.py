@@ -36,7 +36,7 @@ def batch_bandpass_filtering(sources, destination_lists, bands, channels,
 				else:
 					m.data = mx
 
-			scipy.io.savemat(destination_lists[i][j], {mTot: vmTot})
+			scipy.io.savemat(destination_lists[i][j], {mTot: vmTot}, oned_as='row')
 
 def batch_extracting_latencies(sources, chair, epoch,
 	transpose=False, mTot='mTot', verbose=False):
@@ -66,13 +66,19 @@ def batch_extracting_latencies(sources, chair, epoch,
 
 	return latency_lists
 
-def batch_extracting_features(sources, destinations, channels, configurations,
-	epoch, do_mean=False, do_power=False, transpose=False, mTot='mTot',
-	featmat='featmat', mclass='mclass', verbose=False):
+def batch_extracting_features(sources, destinations,
+	channels, configurations, epoch,
+	latency_lists=None, start_offset=0, stop_offset=0,
+	do_mean=False, do_power=False, transpose=False,
+	mTot='mTot', featmat='featmat', mclass='mclass',
+	verbose=False):
 
-	windows = bci.features.generate_sliding_window(configurations, epoch)
+	if latency_lists == None:
+		windows = bci.features.generate_sliding_window(configurations, epoch)
 
 	for i, source in enumerate(sources):
+		destination = destinations[i]
+
 		if verbose:
 			print '[%d/%d] Extracting %s' % (i+1, len(sources), source)
 
@@ -81,6 +87,13 @@ def batch_extracting_features(sources, destinations, channels, configurations,
 		vfeatmat = []
 
 		for j, m in enumerate(vmTot):
+			if latency_lists != None:
+				latency = latency_lists[i][j]
+				for c in configurations:
+					c['start'] = latency + start_offset
+					c['stop'] = latency + stop_offset
+				windows = bci.features.generate_sliding_window(
+					configurations, epoch)
 
 			if transpose:
 				matrix, mx = numpy.transpose(m.data), []
@@ -101,13 +114,14 @@ def batch_extracting_features(sources, destinations, channels, configurations,
 
 		vmclass = [m.type for m in vmTot]
 
-		scipy.io.savemat(destinations[i], {featmat: vfeatmat, mclass: vmclass})
+		scipy.io.savemat(destination, {featmat: vfeatmat, mclass: vmclass}, oned_as='row')
 
 def batch_combining(source_lists, destinations, variable, axis,
 	passing_variables=[], verbose=False):
 
 	for i, sources in enumerate(source_lists):
 		destination = destinations[i]
+
 		if verbose:
 			print '[%d/%d] Combining to %s' % (
 				i+1, len(source_lists), destinations[i])
@@ -119,6 +133,8 @@ def batch_converting(sources, destinations, relations,
 	featmat='featmat', mclass='mclass', verbose=False):
 
 	for i, source in enumerate(sources):
+		destination = destinations[i]
+
 		if verbose:
 			print '[%d/%d] Converting %s' % (i+1, len(sources), source)
 
@@ -132,7 +148,7 @@ def batch_converting(sources, destinations, relations,
 		classes = ('class', '{4,5}')
 		classifications = vmclass
 
-		weka.arff.write_arff(destinations[i], relation, attributes, data,
+		weka.arff.write_arff(destination, relation, attributes, data,
 			classes, classifications)
 
 def batch_infogain_evaluating(paths, classpath, threshold=0, verbose=False):
@@ -155,6 +171,7 @@ def batch_infogain_svm_classifying(trainings, tests, classpath,
 
 	for i, training in enumerate(trainings):
 		test = tests[i]
+
 		if verbose:
 			print '[%d/%d] Classifying %s' % (i+1, len(trainings), training)
 

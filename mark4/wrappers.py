@@ -1,5 +1,6 @@
 
-import numpy, scipy.io, sklearn.svm
+# import numpy, scipy.io, sklearn.svm
+import numpy, scipy.io
 import bci.features
 import weka.evaluate, weka.classify
 
@@ -27,10 +28,10 @@ def extract_latency(m, channel, threshold, epoch, verbose=False):
 			print message % (channel, m.trial)
 		return m.time[-1]
 
-def classify_with_svm(trainingX, trainingY, testX, testY):
-	svc = sklearn.svm.SVC(kernel='linear')
-	svc.fit(trainingX, trainingY)
-	return svc.score(testX, testY)
+# def classify_with_svm(trainingX, trainingY, testX, testY):
+# 	svc = sklearn.svm.SVC(kernel='linear')
+# 	svc.fit(trainingX, trainingY)
+# 	return svc.score(testX, testY)
 
 def evaluate_with_infogain(classpath, datafile, threshold):
 	output = weka.evaluate.evaluate_attribute(classpath,

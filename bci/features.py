@@ -17,7 +17,8 @@ def list_windows(configurations):
 		size = c['size']
 		windows.extend([(s, s + size)
 			for s in numpy.arange(start, stop, step)
-			if s + size <= stop])
+			# Due to the inaccuracy of float numbers
+			if s + size <= stop + 0.001])
 	return windows
 
 def index_windows(windows, epoch):
