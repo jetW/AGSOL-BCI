@@ -39,7 +39,7 @@ def batch_bandpass_filtering(sources, destination_lists, bands, channels,
 			scipy.io.savemat(destination_lists[i][j], {mTot: vmTot}, oned_as='row')
 
 def batch_extracting_latencies(sources, chair, epoch,
-	transpose=False, mTot='mTot', verbose=False):
+	latency_offset=0, transpose=False, mTot='mTot', verbose=False):
 
 	latency_lists = []
 
@@ -48,6 +48,8 @@ def batch_extracting_latencies(sources, chair, epoch,
 			print '[%d/%d] Extracting %s' % (i+1, len(sources), source)
 
 		vmTot = wrappers.load_mat_variable(source, mTot)
+		channel = chair['channel']
+		threshold = chair['threshold'] * chair['constant']
 
 		latencies = []
 
@@ -56,10 +58,37 @@ def batch_extracting_latencies(sources, chair, epoch,
 			if transpose:
 				m.data = numpy.transpose(m.data)
 
-			channel = chair['channel']
-			threshold = chair['threshold'] * chair['constant']
 			latency = wrappers.extract_latency(
-				m, channel, threshold, epoch, verbose)
+				m, channel, threshold, epoch, latency_offset, verbose)
+			latencies.append(latency)
+
+		latency_lists.append(latencies)
+
+	return latency_lists
+
+def batch_extracting_difference_latencies(sources, eye, epoch, coefficients,
+	latency_offset=0, transpose=False, mTot='mTot', verbose=False):
+
+	latency_lists = []
+
+	for i, source in enumerate(sources):
+		if verbose:
+			print '[%d/%d] Extracting %s' % (i+1, len(sources), source)
+
+		vmTot = wrappers.load_mat_variable(source, mTot)
+		channel, channel1, channel2 = eye['channel'], eye['channel1'], eye['channel2']
+		threshold = eye['threshold'] * numpy.abs(coefficients[i])
+
+		latencies = []
+
+		for j, m in enumerate(vmTot):
+
+			if transpose:
+				m.data = numpy.transpose(m.data)
+
+			m.data[channel] = m.data[channel1-1] - m.data[channel2-1]
+			latency = wrappers.extract_latency(
+				m, channel, threshold, epoch, latency_offset, verbose)
 			latencies.append(latency)
 
 		latency_lists.append(latencies)

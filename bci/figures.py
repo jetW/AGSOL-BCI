@@ -52,7 +52,7 @@ def draw_texts(coordinates, texts, textx=0, texty=0, textha='center', textva='ce
 	for i, (x, y) in enumerate(coordinates):
 		pylab.text(x + textx, y + texty, texts[i], ha=textha, va=textva)
 
-def grouped_bar_chart(values, errors=None, colors=None, labels=None, xticks=None):
+def grouped_bar_chart(values, errors=None, colors=None, hatches=None, labels=None, xticks=None):
 
 	# Calculate implicit parameters
 	ngroups = len(values)
@@ -61,7 +61,8 @@ def grouped_bar_chart(values, errors=None, colors=None, labels=None, xticks=None
 
 	# Validate optional parameters
 	errors = [None] * ngroups if errors == None else errors
-	colors = [None] * ngroups if colors == None else colors
+	colors = ['w'] * ngroups if colors == None else colors
+	hatches = [''] * ngroups if hatches == None else hatches
 	labels = [''] * ngroups if labels == None else labels
 	xticks = range(1, nbars + 1) if xticks == None else xticks
 
@@ -71,7 +72,7 @@ def grouped_bar_chart(values, errors=None, colors=None, labels=None, xticks=None
 		groupleft = 1 + barwidth * (-ngroups / 2.0 + i)
 		groupright = groupleft + nbars
 		pylab.bar(numpy.arange(groupleft, groupright), values[i], yerr=errors[i],
-			width=barwidth, color=colors[i], ecolor='k', label=labels[i])
+			width=barwidth, color=colors[i], ecolor='k', hatch=hatches[i], label=labels[i])
 
 		# Calculate and draw accessories
 		pylab.xticks(range(1, len(xticks) + 1), xticks)

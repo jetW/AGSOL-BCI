@@ -18,15 +18,16 @@ def combine_mat_matrices(sources, destination, variable, axis, extra_variables):
 		dictionary[ev] = load_mat_variable(sources[0], ev)
 	scipy.io.savemat(destination, dictionary)
 
-def extract_latency(m, channel, threshold, epoch, verbose=False):
+def extract_latency(m, channel, threshold, epoch, latency_offset, verbose=False):
 	try:
 		return bci.features.extract_latency(
 			m.data[channel-1], m.time, threshold, epoch)
 	except StopIteration:
+		latency = m.time[-1 - epoch['frequency'] * latency_offset]
 		if verbose:
-			message = '[Channel %d] No movement detected at Trial %d'
-			print message % (channel, m.trial)
-		return m.time[-1]
+			message = '[Channel %d] No movement detected at Trial %d, using %f'
+			print message % (channel, m.trial, latency)
+		return latency
 
 # def classify_with_svm(trainingX, trainingY, testX, testY):
 # 	svc = sklearn.svm.SVC(kernel='linear')
