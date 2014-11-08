@@ -86,7 +86,9 @@ def batch_extracting_difference_latencies(sources, eye, epoch, coefficients,
 			if transpose:
 				m.data = numpy.transpose(m.data)
 
-			m.data[channel] = m.data[channel1-1] - m.data[channel2-1]
+			m.data[channel-1] = m.data[channel1-1] - m.data[channel2-1]
+			m.data[channel-1] = bci.signal.butter_lowpass_filter(
+				m.data[channel-1], epoch['frequency'], 5, 5)
 			latency = wrappers.extract_latency(
 				m, channel, threshold, epoch, latency_offset, verbose)
 			latencies.append(latency)
@@ -102,9 +104,6 @@ def batch_extracting_features(sources, destinations,
 	mTot='mTot', featmat='featmat', mclass='mclass',
 	verbose=False):
 
-	if latency_lists == None:
-		windows = bci.features.generate_sliding_window(configurations, epoch)
-
 	for i, source in enumerate(sources):
 		destination = destinations[i]
 
@@ -116,13 +115,15 @@ def batch_extracting_features(sources, destinations,
 		vfeatmat = []
 
 		for j, m in enumerate(vmTot):
-			if latency_lists != None:
+			windows = []
+			if latency_lists == None:
+				for c in configurations:
+					windows.extend(c.get_windows(epoch))
+			else:
 				latency = latency_lists[i][j]
 				for c in configurations:
-					c['start'] = latency + start_offset
-					c['stop'] = latency + stop_offset
-				windows = bci.features.generate_sliding_window(
-					configurations, epoch)
+					c.set_relative_mode(latency, start_offset, stop_offset)
+					windows.extend(c.get_windows(epoch))
 
 			if transpose:
 				matrix, mx = numpy.transpose(m.data), []

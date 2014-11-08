@@ -1,12 +1,18 @@
 
 import scipy.signal, numpy
 
-def butter_bandpass_filter(signal, frequency, band, order):
+def butter_bandpass_filter(signal, sampling, band, order):
 	# http://en.wikipedia.org/wiki/Nyquist-Shannon_sampling_theorem
-	nyquist = float(frequency) / 2
+	nyquist = float(sampling) / 2
 	lower_cutoff, upper_cutoff = band
 	Wn = [lower_cutoff / nyquist, upper_cutoff / nyquist]
 	b, a = scipy.signal.butter(order, Wn, btype='bandpass')
+	return scipy.signal.filtfilt(b, a, signal)
+
+def butter_lowpass_filter(signal, sampling, cutoff, order):
+	nyquist = float(sampling) / 2
+	Wn = [cutoff / nyquist]
+	b, a = scipy.signal.butter(order, Wn, btype='lowpass')
 	return scipy.signal.filtfilt(b, a, signal)
 
 def laplacian_filter(signal_matrix, laplacian_matrix):
