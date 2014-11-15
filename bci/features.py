@@ -43,11 +43,11 @@ class Window:
 	def __str__(self):
 		c = self.configuration
 		if c.mode == 'absolute':
-			return str((self.left, self.right, c.mode))
+			return str((c.mode, self.left, self.right))
 		elif c.mode == 'relative':
 			left = c.relative_start + c.step * self.index
 			right = left + c.size
-			return str((left, right, c.mode))
+			return str((c.mode, left, right))
 		else:
 			return None
 
@@ -65,19 +65,18 @@ def extract_powers(signal, windows):
 	return [extract_power(signal[w.i:w.j]) for w in windows]
 
 def extract_latency(signal, time, threshold, epoch, reference=0):
-	start = epoch['start']
-	frequency = epoch['frequency']
-	baseindex = (reference - start) * frequency
+	baseindex = (reference - epoch['start']) * epoch['frequency']
 	baseline = signal[baseindex]
 	remainder = signal[baseindex:]
-	offset = next(i for i, v in enumerate(remainder)
-		if abs(v - baseline) >= threshold)
-	return time[baseindex + offset]
+	try:
+		offset = next(i for i, v in enumerate(remainder)
+			if abs(v - baseline) >= threshold)
+		return time[baseindex + offset]
+	except StopIteration:
+		return extract_latency(signal, time, threshold * 0.9, epoch, reference)
 
 def extract_max_amplitude(signal, epoch, reference=0):
-	start = epoch['start']
-	frequency = epoch['frequency']
-	baseindex = (reference - start) * frequency
+	baseindex = (reference - epoch['start']) * epoch['frequency']
 	baseline = signal[baseindex]
 	remainder = signal[baseindex:]
 	positive_difference = abs(max(remainder) - baseline)

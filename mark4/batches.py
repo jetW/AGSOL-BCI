@@ -39,7 +39,7 @@ def batch_bandpass_filtering(sources, destination_lists, bands, channels,
 			scipy.io.savemat(destination_lists[i][j], {mTot: vmTot}, oned_as='row')
 
 def batch_extracting_latencies(sources, chair, epoch,
-	latency_offset=0, transpose=False, mTot='mTot', verbose=False):
+	transpose=False, mTot='mTot', verbose=False):
 
 	latency_lists = []
 
@@ -58,8 +58,8 @@ def batch_extracting_latencies(sources, chair, epoch,
 			if transpose:
 				m.data = numpy.transpose(m.data)
 
-			latency = wrappers.extract_latency(
-				m, channel, threshold, epoch, latency_offset, verbose)
+			latency = bci.features.extract_latency(
+				m.data[channel-1], m.time, threshold, epoch)
 			latencies.append(latency)
 
 		latency_lists.append(latencies)
@@ -67,7 +67,7 @@ def batch_extracting_latencies(sources, chair, epoch,
 	return latency_lists
 
 def batch_extracting_difference_latencies(sources, eye, epoch, coefficients,
-	latency_offset=0, transpose=False, mTot='mTot', verbose=False):
+	transpose=False, mTot='mTot', verbose=False):
 
 	latency_lists = []
 
@@ -89,8 +89,8 @@ def batch_extracting_difference_latencies(sources, eye, epoch, coefficients,
 			m.data[channel-1] = m.data[channel1-1] - m.data[channel2-1]
 			m.data[channel-1] = bci.signal.butter_lowpass_filter(
 				m.data[channel-1], epoch['frequency'], 5, 5)
-			latency = wrappers.extract_latency(
-				m, channel, threshold, epoch, latency_offset, verbose)
+			latency = bci.features.extract_latency(
+				m.data[channel-1], m.time, threshold, epoch)
 			latencies.append(latency)
 
 		latency_lists.append(latencies)
