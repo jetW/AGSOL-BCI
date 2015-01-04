@@ -43,11 +43,11 @@ class Window:
 	def __str__(self):
 		c = self.configuration
 		if c.mode == 'absolute':
-			return str((c.mode, self.left, self.right))
+			return '%s_%f_%f' % (c.mode, self.left, self.right)
 		elif c.mode == 'relative':
 			left = c.relative_start + c.step * self.index
 			right = left + c.size
-			return str((c.mode, left, right))
+			return '%s_%f_%f' % (c.mode, left, right)
 		else:
 			return None
 

@@ -3,6 +3,12 @@ import numpy, scipy.io
 import bci.signal, bci.features
 import weka.arff, weka.evaluate, weka.classify
 
+class Feature:
+	def __init__(self, band, channel, window):
+		self.band = band
+		self.channel = channel
+		self.window = window
+
 def _loadmat(path):
 	return scipy.io.loadmat(path, struct_as_record=False, squeeze_me=True)
 
@@ -100,7 +106,7 @@ def batch_configure_windows(configurations, epoch, nsources, nmovements,
 	return windows_lists
 
 def batch_extracting_features(sources, destinations,
-	channels, windows_lists, do_mean=False, do_power=False):
+	channels, windows_lists, band_name, do_mean=False, do_power=False):
 
 	for i, source in enumerate(sources):
 		destination = destinations[i]
@@ -123,7 +129,13 @@ def batch_extracting_features(sources, destinations,
 
 		mclass = [m.type for m in mTot]
 
-		scipy.io.savemat(destination, {'featmat': featmat, 'mclass': mclass}, oned_as='row')
+		allfeats = []
+		for channel in channels:
+			for window in windows:
+				allfeats.append(Feature(band_name, channel, str(window)))
+
+		scipy.io.savemat(destination, {'featmat': featmat,
+			'allfeats': allfeats, 'mclass': mclass}, oned_as='row')
 
 def batch_combining(source_lists, destinations):
 	for i, sources in enumerate(source_lists):
@@ -131,13 +143,16 @@ def batch_combining(source_lists, destinations):
 
 		mat = _loadmat(sources[0])
 		featmat = mat['featmat']
+		allfeats = mat['allfeats']
 		mclass = mat['mclass']
 
 		for source in sources[1:]:
 			featmat2 = _loadmat(source)['featmat']
 			featmat = numpy.concatenate((featmat, featmat2), axis=1)
+			allfeats2 = _loadmat(source)['allfeats']
+			allfeats = numpy.concatenate((allfeats, allfeats2))
 
-		dictionary = {'featmat': featmat, 'mclass': mclass}
+		dictionary = {'featmat': featmat, 'allfeats': allfeats, 'mclass': mclass}
 		scipy.io.savemat(destination, dictionary, oned_as='row')
 
 def batch_converting(sources, destinations, relations):
@@ -146,11 +161,12 @@ def batch_converting(sources, destinations, relations):
 
 		mat = _loadmat(source)
 		featmat = mat['featmat']
+		allfeats = mat['allfeats']
 		mclass = mat['mclass']
 
 		relation = relations[i]
-		attributes = [('BCI_%d' % (j+1), 'numeric')
-			for j in range(len(featmat[0]))]
+		attributes = [('%s;%s;%s' % (f.band, f.channel, f.window), 'numeric')
+			for f in allfeats]
 		data = featmat
 		classes = ('class', '{4,5}')
 		classifications = mclass
